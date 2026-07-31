@@ -82,13 +82,18 @@ def test_full_pipeline_small_audit():
         AuditConfig(bootstrap_samples=10, placebo_samples=10, surrogate_samples=2, seed=3),
         config,
     )
-    assert "fp" in audit["summary"]
-    assert "event_precision" in audit["summary"]
-    assert "censored_alerts" in audit["summary"]
+    summary = audit["summary"]
+    assert "fp" in summary
+    assert "event_precision" in summary
+    assert "censored_alerts" in summary
+    assert "f1" in summary
+    assert "false_alarms_per_year" in summary
+    assert "mean_lead_days" in summary
+    assert "coreno_roc_auc" in summary
+    assert "vix_roc_auc" in summary
+    assert "vix_f1" in summary
+    assert "coreno_score" in audit["signal"].columns
     assert len(audit["parameter_sweep"]) == 81
-    assert sum(audit["summary"]["false_positive_categories"].values()) == int(
-        audit["summary"]["fp"]
-    )
-    assert audit["summary"]["event_alerts"] <= audit["signal"][
-        "clustered_alert"
-    ].sum()
+    assert "f1" in audit["parameter_sweep"].columns
+    assert sum(summary["false_positive_categories"].values()) == int(summary["fp"])
+    assert summary["event_alerts"] <= audit["signal"]["clustered_alert"].sum()
