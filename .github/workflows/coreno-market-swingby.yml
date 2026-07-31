@@ -11,6 +11,7 @@ on:
         options: [quick, full]
   push:
     branches:
+      - main
       - agent/coreno-market-swingby-simulator
     paths:
       - "coreno-market-swingby/**"
