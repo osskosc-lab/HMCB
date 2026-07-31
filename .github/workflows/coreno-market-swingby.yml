@@ -1,0 +1,61 @@
+name: CORENO Market Swing-by Simulation
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "quick or full"
+        required: true
+        default: "quick"
+        type: choice
+        options: [quick, full]
+  push:
+    branches:
+      - main
+      - agent/coreno-market-swingby-simulator
+    paths:
+      - "coreno-market-swingby/**"
+      - ".github/workflows/coreno-market-swingby.yml"
+  pull_request:
+    paths:
+      - "coreno-market-swingby/**"
+      - ".github/workflows/coreno-market-swingby.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: coreno-market-swingby
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: coreno-market-swingby/pyproject.toml
+      - name: Install
+        run: python -m pip install -e ".[test]"
+      - name: Unit tests
+        run: pytest -q
+      - name: Quick historical simulation
+        if: github.event_name != 'workflow_dispatch' || inputs.mode == 'quick'
+        run: python run_simulation.py --start 1990-01-01 --quick --output outputs
+      - name: Full historical simulation
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full'
+        run: >-
+          python run_simulation.py --start 1990-01-01
+          --bootstrap 2000 --placebo 2000 --surrogates 200
+          --output outputs
+      - name: Upload simulation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coreno-market-swingby-results
+          path: coreno-market-swingby/outputs/
+          if-no-files-found: warn
+          retention-days: 30
