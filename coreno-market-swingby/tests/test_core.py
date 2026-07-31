@@ -84,4 +84,11 @@ def test_full_pipeline_small_audit():
     )
     assert "fp" in audit["summary"]
     assert "event_precision" in audit["summary"]
+    assert "censored_alerts" in audit["summary"]
     assert len(audit["parameter_sweep"]) == 81
+    assert sum(audit["summary"]["false_positive_categories"].values()) == int(
+        audit["summary"]["fp"]
+    )
+    assert audit["summary"]["event_alerts"] <= audit["signal"][
+        "clustered_alert"
+    ].sum()
